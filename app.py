@@ -3,7 +3,7 @@ import google.generativeai as genai
 import json
 
 # --- הגדרת דף ---
-st.set_page_config(page_title="האופטימייזר של משפחת פרנקפורט", page_icon="💸")
+st.set_page_config(page_title="האופטימייזר המשפחתי", page_icon="💸")
 
 # --- פונקציית אבטחה (Login) ---
 def check_password():
@@ -28,7 +28,7 @@ if not check_password():
 
 # --- האפליקציה ---
 st.title("💸 האופטימייזר המשפחתי")
-st.caption("ממקסמים החזרים • מנצלים כל שקל • עובדים חכם")
+st.caption("ממקסמים החזרים • מנצלים פיצול שנים • עוקפים תקרות")
 
 # חיבור למפתח
 if "GOOGLE_API_KEY" in st.secrets:
@@ -39,51 +39,39 @@ else:
 if api_key:
     genai.configure(api_key=api_key)
     
-    # --- המוח: Strict Auditor & Creative Optimizer ---
+    # --- המוח המעודכן: אסטרטגיית הראל + מכבי ---
     system_instruction = """
-    You are a Strict Insurance Claims Auditor & Creative Family Optimizer.
-    Your goal is to legally maximize the cash refund for the family by utilizing EVERY available policy (Husband & Wife) and EVERY clause type.
+    אתה מנהל אופטימיזציית תביעות ביטוח למשפחה ישראלית.
+    המטרה: להוציא מקסימום כסף מהביטוח, בצורה חוקית וחכמה.
 
-    --- VOICE & TONE GUIDELINES (CRITICAL) ---
-    1. LANGUAGE: Hebrew Only. Natural, modern, Israeli ("בגובה העיניים").
-    2. VIBE:
-       - Calm & Reassuring ("אל דאגה, יש פה יופי של כיסוי").
-       - Confident ("סמכו עלי, ככה מוציאים את המקסימום").
-       - Folksy but Professional ("חבל לשרוף את סל ההריון על ההתחלה, בואו נעשה תרגיל קטן").
-    3. FORMATTING:
-       - Use Emojis to make it friendly (🤰, 💸, ✅).
-       - No complex tables unless absolutely necessary. Use bullet points.
-       - No technical jargon like "Asset Protection". Translate it to simple advice.
-
-    --- STRATEGY ENGINE ---
-    EXECUTE THESE TACTICS IN EXACT ORDER:
+    ### האלגוריתם שלך (חובה לפעול לפי סדר זה):
     
-    TACTIC A: "QUOTA STACKING" (EXHAUST RENEWABLES FIRST)
-    *Rule:* Before touching any "Specific Bucket" (Category 2), ALWAYS exhaust "Generic Consultation" quotas (Category 1) if the service involves a doctor.
-    - Check if we can use the "Consultation" quota (usually 3-4 per year) BEFORE using the pregnancy basket.
-    - Check if splitting invoices between calendar years (Dec/Jan) helps renew the quota.
+    1. **שלב ראשון: זיהוי "כסף מתחדש" (Renewable First)**
+       - חפש בפוליסות סעיפים של "התייעצות עם רופא מומחה" (למשל סעיף 3.1 בהראל נספח 456).
+       - בדוק אם יש תקרה *לביקור* (למשל 715 ש"ח) ותקרה *שנתית*.
+       - **המלצה קריטית:** אם הטיפול מתפרס על פני דצמבר-ינואר, המלץ לפצל חשבוניות כדי להרוויח מכסה כפולה (שנת 2025 + שנת 2026).
+       - הנחיה למשתמש: "בקשו קבלה על 'ייעוץ מומחה' ולא על 'בדיקה'".
 
-    TACTIC B: "THE SPECIFIC BUCKET"
-    Only after Renewable Quotas are dry, use the "Specific Service" bucket (e.g., Pregnancy Basket).
+    2. **שלב שני: "כסף ייעודי" (Specific Bucket)**
+       - רק אחרי שסחטנו את הייעוצים, חפש סעיפים ייעודיים (כמו "בדיקות היריון" סעיף 3.7 בהראל, או "טיפולי התפתחות הילד").
+       - נצל את הסעיפים האלה עד התקרה שלהם.
 
-    INSTRUCTION:
-    When the user asks a question, process the logic internally, then output the response in this structure:
+    3. **שלב שלישי: שב"ן (קופת חולים)**
+       - את היתרה (או דברים שאין בפרטי, כמו דולה/הבראה) - שלח ל"סל היריון" של מכבי שלי/זהב.
+       - זכור: סל היריון הוא חד-פעמי לכל ההיריון, שמור אותו לסוף או לדברים שאין להם כיסוי אחר.
 
-    1. **השורה התחתונה (The Bottom Line):**
-       Start with a reassuring summary.
-    2. **מה עושים בפועל (Action Plan):**
-       Clear instructions on how to ask for the receipts.
-       - "3 חשבוניות ראשונות: בקשו על שם X כ'ייעוץ'."
-    3. **כמה כסף חוזר (The Money):**
-       Simple breakdown showing the total expected refund vs cost.
+    ### סגנון תשובה:
+    - דבר "דוגרי" ובגובה העיניים (כמו יועץ שמכיר את הטריקים).
+    - תמיד תן **Action Plan**: מה לבקש מהרופא לכתוב בחשבונית.
+    - עשה חישוב כספי: "אם תעשו X תקבלו 500 ש"ח, אם תעשו Y תקבלו 1000 ש"ח".
     """
     
     model = genai.GenerativeModel("gemini-flash-latest", system_instruction=system_instruction)
 
-    # --- סרגל צד: העלאת מסמכים ---
+    # --- סרגל צד ---
     with st.sidebar:
-        st.header("📂 המסמכים שלכם")
-        uploaded_files = st.file_uploader("העלה פוליסות / קבלות (PDF)", type=["pdf"], accept_multiple_files=True)
+        st.header("📂 מסמכים לניתוח")
+        uploaded_files = st.file_uploader("העלה פוליסות / נספחים / קבלות", type=["pdf"], accept_multiple_files=True)
         
         pdf_parts = []
         if uploaded_files:
@@ -97,16 +85,16 @@ if api_key:
                     pass
             
             if len(pdf_parts) > 0:
-                st.success(f"התקבלו {len(pdf_parts)} מסמכים. אני מוכן לנתח! 😎")
+                st.success(f"התקבלו {len(pdf_parts)} קבצים. האופטימייזר מוכן.")
 
     # --- צ'אט ---
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "אהלן אוהד ועמית! 👋 תעלו לי את הפוליסות או החשבוניות, ואני אדאג שתוציאו את המקסימום מהביטוח."}]
+        st.session_state.messages = [{"role": "assistant", "content": "היי! אני מכיר את הטריקים של נספח 456 ושל מכבי. תעלו את המסמכים ואגיד לכם איך לפצל את החשבוניות כדי לקבל מקסימום כסף."}]
 
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    user_input = st.chat_input("למשל: יש לי 13 ביקורים אצל רופא פרטי, איך להגיש אותם?")
+    user_input = st.chat_input("למשל: איך להגיש 13 קבלות של רופא פרטי?")
 
     if user_input:
         st.chat_message("user").write(user_input)
@@ -115,10 +103,10 @@ if api_key:
         inputs = [user_input]
         if pdf_parts: inputs.extend(pdf_parts)
         
-        with st.spinner("בונה אסטרטגיה להחזר מקסימלי... 🧠"):
+        with st.spinner("מחשב מסלול לכסף... 💰"):
             try:
                 response = model.generate_content(inputs)
                 st.chat_message("assistant").write(response.text)
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
             except Exception as e:
-                st.error("אופס, משהו השתבש בחיבור. נסה שוב.")
+                st.error("שגיאה בתקשורת.")
