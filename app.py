@@ -13,7 +13,23 @@ else:
 if api_key:
     # חיבור ל-Gemini
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-pro')
+    # הגדרת האייג'נט וההנחיות שלו
+    system_instruction = """
+    אתה יועץ ביטוח מומחה ופיננסי אישי של משפחת פרנקפורט.
+    התפקיד שלך הוא לעזור לנהל את תביעות הביטוח, להבין את הפוליסות ולמצוא כפל ביטוחי.
+    
+    כללים:
+    1. ענה תמיד בעברית קצרה ותכליתית.
+    2. אם אתה לא בטוח בכיסוי מסוים, תבקש לראות את הפוליסה.
+    3. תהיה אמפתי, אבל מקצועי.
+    4. כששואלים אותך על כסף, תציג את התשובה בצורה של טבלה אם אפשר.
+    """
+    
+    # שימוש במודל מהיר וחדש יותר שתומך בהוראות מערכת
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        system_instruction=system_instruction
+    )
 
     # תיבת טקסט למשתמש
     user_input = st.chat_input("כתוב משהו...")
