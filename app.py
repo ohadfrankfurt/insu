@@ -3,16 +3,14 @@ import google.generativeai as genai
 import json
 
 # --- הגדרת דף ---
-st.set_page_config(page_title="ניהול ביטוחים ומיצוי זכויות", page_icon="🏥")
+st.set_page_config(page_title="האופטימייזר של משפחת פרנקפורט", page_icon="💸")
 
 # --- פונקציית אבטחה (Login) ---
 def check_password():
     if "APP_PASSWORD" not in st.secrets:
         return True 
-
     if "password_correct" not in st.session_state:
         st.session_state.password_correct = False
-
     if not st.session_state.password_correct:
         st.title("🔒 כניסה למערכת")
         password = st.text_input("סיסמה:", type="password")
@@ -29,8 +27,8 @@ if not check_password():
     st.stop()
 
 # --- האפליקציה ---
-st.title("🏥 מנהל הביטוחים המשפחתי")
-st.caption("מיצוי זכויות • ניהול תביעות • הבנת כיסויים")
+st.title("💸 האופטימייזר המשפחתי")
+st.caption("ממקסמים החזרים • מנצלים כל שקל • עובדים חכם")
 
 # חיבור למפתח
 if "GOOGLE_API_KEY" in st.secrets:
@@ -41,26 +39,51 @@ else:
 if api_key:
     genai.configure(api_key=api_key)
     
-    # --- המוח החדש: ממוקד מיצוי זכויות ותביעות ---
+    # --- המוח: Strict Auditor & Creative Optimizer ---
     system_instruction = """
-    אתה מנהל תיק הביטוח של משפחת פרנקפורט.
-    המטרה העליונה: עזרה במיצוי זכויות והגשת תביעות.
+    You are a Strict Insurance Claims Auditor & Creative Family Optimizer.
+    Your goal is to legally maximize the cash refund for the family by utilizing EVERY available policy (Husband & Wife) and EVERY clause type.
+
+    --- VOICE & TONE GUIDELINES (CRITICAL) ---
+    1. LANGUAGE: Hebrew Only. Natural, modern, Israeli ("בגובה העיניים").
+    2. VIBE:
+       - Calm & Reassuring ("אל דאגה, יש פה יופי של כיסוי").
+       - Confident ("סמכו עלי, ככה מוציאים את המקסימום").
+       - Folksy but Professional ("חבל לשרוף את סל ההריון על ההתחלה, בואו נעשה תרגיל קטן").
+    3. FORMATTING:
+       - Use Emojis to make it friendly (🤰, 💸, ✅).
+       - No complex tables unless absolutely necessary. Use bullet points.
+       - No technical jargon like "Asset Protection". Translate it to simple advice.
+
+    --- STRATEGY ENGINE ---
+    EXECUTE THESE TACTICS IN EXACT ORDER:
     
-    הנחיות:
-    1. אל תתמקד במחיר, אלא ב*מה מגיע למבוטח*.
-    2. כשמנתחים פוליסה, הדגש את הכיסויים המרכזיים (ניתוחים, תרופות, לידה, התפתחות הילד).
-    3. אם המשתמש שואל על פרוצדורה רפואית, הסבר בדיוק מה צריך להגיש כדי לקבל החזר.
-    4. זהה השתתפות עצמית ותקרות כיסוי.
-    
-    ענה בעברית ברורה, מקצועית ומרגיעה.
+    TACTIC A: "QUOTA STACKING" (EXHAUST RENEWABLES FIRST)
+    *Rule:* Before touching any "Specific Bucket" (Category 2), ALWAYS exhaust "Generic Consultation" quotas (Category 1) if the service involves a doctor.
+    - Check if we can use the "Consultation" quota (usually 3-4 per year) BEFORE using the pregnancy basket.
+    - Check if splitting invoices between calendar years (Dec/Jan) helps renew the quota.
+
+    TACTIC B: "THE SPECIFIC BUCKET"
+    Only after Renewable Quotas are dry, use the "Specific Service" bucket (e.g., Pregnancy Basket).
+
+    INSTRUCTION:
+    When the user asks a question, process the logic internally, then output the response in this structure:
+
+    1. **השורה התחתונה (The Bottom Line):**
+       Start with a reassuring summary.
+    2. **מה עושים בפועל (Action Plan):**
+       Clear instructions on how to ask for the receipts.
+       - "3 חשבוניות ראשונות: בקשו על שם X כ'ייעוץ'."
+    3. **כמה כסף חוזר (The Money):**
+       Simple breakdown showing the total expected refund vs cost.
     """
     
     model = genai.GenerativeModel("gemini-flash-latest", system_instruction=system_instruction)
 
-    # --- סרגל צד: דשבורד כיסויים ---
+    # --- סרגל צד: העלאת מסמכים ---
     with st.sidebar:
-        st.header("📂 תיק מסמכים")
-        uploaded_files = st.file_uploader("העלה פוליסות או כתבי שירות", type=["pdf"], accept_multiple_files=True)
+        st.header("📂 המסמכים שלכם")
+        uploaded_files = st.file_uploader("העלה פוליסות / קבלות (PDF)", type=["pdf"], accept_multiple_files=True)
         
         pdf_parts = []
         if uploaded_files:
@@ -73,50 +96,17 @@ if api_key:
                 except:
                     pass
             
-            # --- ניתוח אוטומטי מותאם לניהול כיסויים ---
             if len(pdf_parts) > 0:
-                st.divider()
-                st.subheader("📌 תמצית הכיסוי")
-                
-                with st.spinner("מחלץ זכויות..."):
-                    try:
-                        # פרומפט ששואב מידע אופרטיבי לשימוש בביטוח
-                        dashboard_prompt = """
-                        נתח את המסמך והחזר אובייקט JSON בלבד.
-                        תתמקד בתוכן הכיסוי ולא במחיר.
-                        המבנה:
-                        {
-                            "provider": "שם החברה (למשל: הראל, מכבי)",
-                            "main_coverage": "מהות הביטוח ב-3 מילים (למשל: שב״ן, בריאות פרטי, תאונות)",
-                            "deductible": "גובה השתתפות עצמית (אם יש)",
-                            "key_benefit": "הטבה אחת בולטת (למשל: רופא עד הבית, החזר ייעוץ)"
-                        }
-                        """
-                        
-                        response = model.generate_content([dashboard_prompt] + pdf_parts)
-                        clean_json = response.text.replace("```json", "").replace("```", "").strip()
-                        data = json.loads(clean_json)
-                        
-                        # הצגת נתונים רלוונטיים לתביעה
-                        st.info(f"**חברה:** {data.get('provider')}")
-                        st.success(f"**סוג:** {data.get('main_coverage')}")
-                        
-                        c1, c2 = st.columns(2)
-                        c1.metric("השתתפות עצמית", data.get('deductible', 'ללא'))
-                        c2.metric("הטבה בולטת", "ראה פירוט", help=data.get('key_benefit'))
-                        st.caption(f"✨ {data.get('key_benefit')}")
-                        
-                    except Exception as e:
-                        st.warning("לא הצלחתי לחלץ נתונים אוטומטית")
+                st.success(f"התקבלו {len(pdf_parts)} מסמכים. אני מוכן לנתח! 😎")
 
     # --- צ'אט ---
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "היי אוהד. העלה את הפוליסה ואעזור לך להבין מה מגיע לכם ואיך מגישים את התביעה."}]
+        st.session_state.messages = [{"role": "assistant", "content": "אהלן אוהד ועמית! 👋 תעלו לי את הפוליסות או החשבוניות, ואני אדאג שתוציאו את המקסימום מהביטוח."}]
 
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    user_input = st.chat_input("למשל: האם מגיע לי החזר על ייעוץ רופא מומחה?")
+    user_input = st.chat_input("למשל: יש לי 13 ביקורים אצל רופא פרטי, איך להגיש אותם?")
 
     if user_input:
         st.chat_message("user").write(user_input)
@@ -125,9 +115,10 @@ if api_key:
         inputs = [user_input]
         if pdf_parts: inputs.extend(pdf_parts)
         
-        try:
-            response = model.generate_content(inputs)
-            st.chat_message("assistant").write(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
-        except:
-            st.error("שגיאה בתקשורת")
+        with st.spinner("בונה אסטרטגיה להחזר מקסימלי... 🧠"):
+            try:
+                response = model.generate_content(inputs)
+                st.chat_message("assistant").write(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+            except Exception as e:
+                st.error("אופס, משהו השתבש בחיבור. נסה שוב.")
