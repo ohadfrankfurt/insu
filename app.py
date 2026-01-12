@@ -1,9 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
-from PIL import Image
 
 # כותרת האפליקציה
-st.title("הצ'אט שלי עם Gemini - יועץ ביטוח")
+st.title("הצ'אט שלי עם Gemini - יועץ ביטוח (PDF)")
 
 # הגדרת המפתח
 if "GOOGLE_API_KEY" in st.secrets:
@@ -17,30 +16,35 @@ if api_key:
     # הגדרת האייג'נט
     system_instruction = """
     אתה יועץ ביטוח מומחה ופיננסי אישי של משפחת פרנקפורט.
-    התפקיד שלך הוא לעזור לנהל את תביעות הביטוח, להבין את הפוליסות ולמצוא כפל ביטוחי.
+    התפקיד שלך הוא לנתח מסמכי ביטוח, פוליסות ודוחות שנתיים מקבצי PDF.
     
     כללים:
     1. ענה תמיד בעברית קצרה ותכליתית.
-    2. אם מעלים תמונה של מסמך, סכם בקצרה מה רואים בו והאם יש שם משהו דחוף לטיפול.
-    3. תהיה אמפתי, אבל מקצועי.
+    2. סכם את המסמך: מה סוג הביטוח, כמה משלמים, ומה הכיסוי העיקרי.
+    3. חפש "מוקשים" או חריגים בפוליסה וציין אותם.
     4. כששואלים אותך על כסף, תציג את התשובה בצורה של טבלה אם אפשר.
     """
     
+    # מודל Flash 1.5 מצוין לקריאת מסמכים ארוכים
     model = genai.GenerativeModel(
         model_name="gemini-1.5-flash",
         system_instruction=system_instruction
     )
 
-    # --- תוספת חדשה: אזור להעלאת קבצים בצד ---
+    # --- אזור להעלאת קבצים בצד (PDF בלבד) ---
     with st.sidebar:
         st.header("צרף מסמך ביטוח")
-        uploaded_file = st.file_uploader("בחר תמונה (PNG/JPG)", type=["png", "jpg", "jpeg"])
+        uploaded_file = st.file_uploader("בחר קובץ PDF", type=["pdf"])
         
-        image_data = None
+        pdf_part = None
         if uploaded_file is not None:
-            # הצגת התמונה בקטן כדי שנדע שזה עבד
-            image_data = Image.open(uploaded_file)
-            st.image(image_data, caption="המסמך שלך", use_column_width=True)
+            # קריאת הקובץ והכנתו לשליחה ל-Gemini
+            bytes_data = uploaded_file.getvalue()
+            pdf_part = {
+                "mime_type": "application/pdf",
+                "data": bytes_data
+            }
+            st.success("הקובץ נטען בהצלחה! אפשר לשאול שאלות.")
 
     # היסטוריית צ'אט
     if "messages" not in st.session_state:
@@ -51,26 +55,23 @@ if api_key:
         st.chat_message(msg["role"]).write(msg["content"])
 
     # תיבת טקסט למשתמש
-    user_input = st.chat_input("שאל משהו על הביטוח או על המסמך שהעלית...")
+    user_input = st.chat_input("שאל משהו על הפוליסה...")
 
     if user_input:
-        # הצגת השאלה שלך
+        # הצגת השאלה
         st.chat_message("user").write(user_input)
         st.session_state.messages.append({"role": "user", "content": user_input})
 
-        # הכנת הפנייה ל-AI (עם או בלי תמונה)
-        if image_data:
-            # אם יש תמונה, שולחים גם אותה וגם את הטקסט
-            inputs = [user_input, image_data]
-            st.info("מנתח את המסמך שהעלית... 📄") # חיווי למשתמש
-        else:
-            # אם אין תמונה, שולחים רק טקסט
-            inputs = [user_input]
+        # הכנת הפנייה (טקסט + PDF אם קיים)
+        inputs = [user_input]
+        if pdf_part:
+            inputs.append(pdf_part)
+            st.toast("קורא את ה-PDF... זה עשוי לקחת כמה שניות")
 
-        # שליחה וקבלת תשובה
+        # קבלת תשובה
         try:
             response = model.generate_content(inputs)
             st.chat_message("assistant").write(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"אופס, קרתה שגיאה: {e}")
+            st.error(f"שגיאה בקריאת הקובץ: {e}")
