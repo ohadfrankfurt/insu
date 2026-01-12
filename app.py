@@ -25,9 +25,9 @@ if api_key:
     4. כששואלים אותך על כסף, תציג את התשובה בצורה של טבלה אם אפשר.
     """
     
-    # משתמשים במודל שראינו ברשימה שלך
+    # חזרנו למודל היציב והמהיר - עכשיו הוא יעבוד כי עדכנו את הספרייה בשרת
     model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash", 
+        model_name="gemini-1.5-flash", 
         system_instruction=system_instruction
     )
 
