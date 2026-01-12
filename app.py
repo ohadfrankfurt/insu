@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 
 # כותרת האפליקציה
-st.title("הצ'אט שלי עם Gemini - יועץ ביטוח (PDF)")
+st.title("הצ'אט שלי עם Gemini - יועץ ביטוח")
 
 # הגדרת המפתח
 if "GOOGLE_API_KEY" in st.secrets:
@@ -25,11 +25,16 @@ if api_key:
     4. כששואלים אותך על כסף, תציג את התשובה בצורה של טבלה אם אפשר.
     """
     
-    # חזרנו למודל היציב והמהיר - עכשיו הוא יעבוד כי עדכנו את הספרייה בשרת
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash", 
-        system_instruction=system_instruction
-    )
+    # שימוש בשם שהופיע במפורש ברשימה שלך
+    model_name = "gemini-flash-latest"
+
+    try:
+        model = genai.GenerativeModel(
+            model_name=model_name, 
+            system_instruction=system_instruction
+        )
+    except Exception as e:
+        st.error(f"שגיאה בטעינת המודל: {e}")
 
     # --- אזור להעלאת קבצים בצד ---
     with st.sidebar:
@@ -73,8 +78,12 @@ if api_key:
 
         # קבלת תשובה
         try:
-            response = model.generate_content(inputs)
-            st.chat_message("assistant").write(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            # אם המודל לא הוגדר בהצלחה למעלה, נמנע קריסה
+            if 'model' in locals():
+                response = model.generate_content(inputs)
+                st.chat_message("assistant").write(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+            else:
+                st.error("המודל לא נטען כראוי, אנא בדוק את הגדרות ה-API.")
         except Exception as e:
             st.error(f"שגיאה: {e}")
