@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 
 # כותרת האפליקציה
-st.title("הצ'אט שלי עם Gemini - יועץ ביטוח")
+st.title("בדיקת כפל ביטוחים (Gemini)")
 
 # הגדרת המפתח
 if "GOOGLE_API_KEY" in st.secrets:
@@ -13,19 +13,21 @@ else:
 if api_key:
     genai.configure(api_key=api_key)
     
-    # הגדרת האייג'נט
+    # הגדרת האייג'נט - מתמחה בהשוואות
     system_instruction = """
-    אתה יועץ ביטוח מומחה ופיננסי אישי של משפחת פרנקפורט.
-    התפקיד שלך הוא לנתח מסמכי ביטוח, פוליסות ודוחות שנתיים מקבצי PDF.
+    אתה יועץ ביטוח מומחה של משפחת פרנקפורט.
+    המטרה שלך היא לחסוך כסף על ידי איתור כפל ביטוח.
     
-    כללים:
-    1. ענה תמיד בעברית קצרה ותכליתית.
-    2. סכם את המסמך: מה סוג הביטוח, כמה משלמים, ומה הכיסוי העיקרי.
-    3. חפש "מוקשים" או חריגים בפוליסה וציין אותם.
-    4. כששואלים אותך על כסף, תציג את התשובה בצורה של טבלה אם אפשר.
+    הנחיות לפעולה:
+    1. אם הועלה מסמך אחד: סכם אותו, ציין מחיר וכיסויים עיקריים.
+    2. אם הועלו שני מסמכים או יותר: בצע השוואה ראש-בראש.
+       - צור טבלה שמשווה את הכיסויים בכל מסמך.
+       - ציין במפורש: "נמצאה חפיפה בכיסוי X".
+       - המלץ איזה ביטוח נראה משתלם יותר (מבחינת עלות מול תועלת).
+    3. דבר קצר, ברור ובעברית.
     """
     
-    # שימוש בשם שהופיע במפורש ברשימה שלך
+    # שימוש במודל שעבד לנו בהצלחה
     model_name = "gemini-flash-latest"
 
     try:
@@ -36,54 +38,35 @@ if api_key:
     except Exception as e:
         st.error(f"שגיאה בטעינת המודל: {e}")
 
-    # --- אזור להעלאת קבצים בצד ---
+    # --- אזור להעלאת קבצים (מרובה) ---
     with st.sidebar:
-        st.header("צרף מסמך ביטוח")
-        uploaded_file = st.file_uploader("בחר קובץ PDF", type=["pdf"])
+        st.header("העלאת פוליסות להשוואה")
+        # השינוי כאן: accept_multiple_files=True
+        uploaded_files = st.file_uploader("בחר קבצי PDF (אפשר כמה יחד)", type=["pdf"], accept_multiple_files=True)
         
-        pdf_part = None
-        if uploaded_file is not None:
-            try:
-                # קריאת הקובץ והכנתו לשליחה ל-Gemini
-                bytes_data = uploaded_file.getvalue()
-                pdf_part = {
-                    "mime_type": "application/pdf",
-                    "data": bytes_data
-                }
-                st.success("הקובץ נטען! אפשר לשאול שאלות.")
-            except Exception as e:
-                st.error(f"תקלה בטעינת הקובץ: {e}")
+        pdf_parts = []
+        if uploaded_files:
+            for uploaded_file in uploaded_files:
+                try:
+                    bytes_data = uploaded_file.getvalue()
+                    pdf_parts.append({
+                        "mime_type": "application/pdf",
+                        "data": bytes_data
+                    })
+                except Exception as e:
+                    st.error(f"תקלה בקובץ {uploaded_file.name}: {e}")
+            
+            if len(pdf_parts) > 0:
+                st.success(f"נטענו {len(pdf_parts)} מסמכים בהצלחה! לחץ על הצ'אט כדי להשוות.")
 
     # היסטוריית צ'אט
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # הצגת ההיסטוריה
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
     # תיבת טקסט למשתמש
-    user_input = st.chat_input("שאל משהו על הפוליסה...")
+    user_input = st.chat_input("למשל: האם יש לי כפל ביטוח בין הקבצים?")
 
     if user_input:
-        # הצגת השאלה
-        st.chat_message("user").write(user_input)
-        st.session_state.messages.append({"role": "user", "content": user_input})
-
-        # הכנת הפנייה (טקסט + PDF אם קיים)
-        inputs = [user_input]
-        if pdf_part:
-            inputs.append(pdf_part)
-            st.toast("Gemini קורא את המסמך... 📄")
-
-        # קבלת תשובה
-        try:
-            # אם המודל לא הוגדר בהצלחה למעלה, נמנע קריסה
-            if 'model' in locals():
-                response = model.generate_content(inputs)
-                st.chat_message("assistant").write(response.text)
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
-            else:
-                st.error("המודל לא נטען כראוי, אנא בדוק את הגדרות ה-API.")
-        except Exception as e:
-            st.error(f"שגיאה: {e}")
