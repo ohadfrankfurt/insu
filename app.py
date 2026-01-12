@@ -27,7 +27,7 @@ if api_key:
     3. דבר קצר, ברור ובעברית.
     """
     
-    # שימוש במודל שעבד לנו בהצלחה
+    # שימוש במודל שעבד לנו
     model_name = "gemini-flash-latest"
 
     try:
@@ -41,7 +41,6 @@ if api_key:
     # --- אזור להעלאת קבצים (מרובה) ---
     with st.sidebar:
         st.header("העלאת פוליסות להשוואה")
-        # השינוי כאן: accept_multiple_files=True
         uploaded_files = st.file_uploader("בחר קבצי PDF (אפשר כמה יחד)", type=["pdf"], accept_multiple_files=True)
         
         pdf_parts = []
@@ -69,4 +68,26 @@ if api_key:
     # תיבת טקסט למשתמש
     user_input = st.chat_input("למשל: האם יש לי כפל ביטוח בין הקבצים?")
 
+    # כאן הייתה השגיאה קודם - עכשיו זה מסודר
     if user_input:
+        st.chat_message("user").write(user_input)
+        st.session_state.messages.append({"role": "user", "content": user_input})
+
+        # הכנת הפנייה (טקסט + רשימת הקבצים)
+        inputs = [user_input]
+        if pdf_parts:
+            inputs.extend(pdf_parts) # הוספת כל הקבצים לרשימה
+            if len(pdf_parts) > 1:
+                st.toast("מבצע השוואה בין המסמכים... ⚖️")
+            else:
+                st.toast("קורא את המסמך... 📄")
+
+        try:
+            if 'model' in locals():
+                response = model.generate_content(inputs)
+                st.chat_message("assistant").write(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+            else:
+                st.error("המודל לא נטען.")
+        except Exception as e:
+            st.error(f"שגיאה: {e}")
