@@ -25,12 +25,17 @@ if api_key:
     4. כששואלים אותך על כסף, תציג את התשובה בצורה של טבלה אם אפשר.
     """
     
-    # תיקון: שימוש בגרסה העדכנית ביותר או ב-Pro אם Flash עושה בעיות
-    # נסה את השורה הזו. אם עדיין יש שגיאה, נחליף ל-gemini-1.5-pro
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash-latest",
-        system_instruction=system_instruction
-    )
+    # ניסיון להשתמש בשם הגרסה המדויק
+    # אם זה לא עובד, זה אומר שיש בעיה כללית יותר עם המפתח
+    model_name = "gemini-1.5-flash-001" 
+
+    try:
+        model = genai.GenerativeModel(
+            model_name=model_name,
+            system_instruction=system_instruction
+        )
+    except Exception as e:
+        st.error(f"שגיאה בהגדרת המודל: {e}")
 
     # --- אזור להעלאת קבצים בצד (PDF בלבד) ---
     with st.sidebar:
@@ -39,13 +44,16 @@ if api_key:
         
         pdf_part = None
         if uploaded_file is not None:
-            # קריאת הקובץ והכנתו לשליחה ל-Gemini
-            bytes_data = uploaded_file.getvalue()
-            pdf_part = {
-                "mime_type": "application/pdf",
-                "data": bytes_data
-            }
-            st.success("הקובץ נטען בהצלחה! אפשר לשאול שאלות.")
+            try:
+                # קריאת הקובץ והכנתו לשליחה ל-Gemini
+                bytes_data = uploaded_file.getvalue()
+                pdf_part = {
+                    "mime_type": "application/pdf",
+                    "data": bytes_data
+                }
+                st.success("הקובץ נטען בהצלחה! אפשר לשאול שאלות.")
+            except Exception as e:
+                st.error(f"לא הצלחתי לקרוא את הקובץ: {e}")
 
     # היסטוריית צ'אט
     if "messages" not in st.session_state:
@@ -70,9 +78,10 @@ if api_key:
             st.toast("קורא את ה-PDF... זה עשוי לקחת כמה שניות")
 
         # קבלת תשובה
-        try:
-            response = model.generate_content(inputs)
-            st.chat_message("assistant").write(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
-        except Exception as e:
-            st.error(f"שגיאה: {e}")
+        if 'model' in locals():
+            try:
+                response = model.generate_content(inputs)
+                st.chat_message("assistant").write(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+            except Exception as e:
+                st.error(f"שגיאה בקבלת תשובה: {e}")
