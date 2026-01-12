@@ -25,9 +25,10 @@ if api_key:
     4. כששואלים אותך על כסף, תציג את התשובה בצורה של טבלה אם אפשר.
     """
     
-    # מודל Flash 1.5 מצוין לקריאת מסמכים ארוכים
+    # תיקון: שימוש בגרסה העדכנית ביותר או ב-Pro אם Flash עושה בעיות
+    # נסה את השורה הזו. אם עדיין יש שגיאה, נחליף ל-gemini-1.5-pro
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemini-1.5-flash-latest",
         system_instruction=system_instruction
     )
 
@@ -74,4 +75,4 @@ if api_key:
             st.chat_message("assistant").write(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"שגיאה בקריאת הקובץ: {e}")
+            st.error(f"שגיאה: {e}")
